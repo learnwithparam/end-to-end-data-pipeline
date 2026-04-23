@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "End-to-End Data Pipeline (learnwithparam workshop fork)"
+version: "2.0.0"
+date-released: "2026-04-23"
+type: software
+authors:
+  - family-names: "Harrison"
+    given-names: "Param"
+    affiliation: "learnwithparam.com"
+repository-code: "https://github.com/learnwithparam/end-to-end-data-pipeline"
+url: "https://www.learnwithparam.com"
+license: "MIT"
+keywords:
+  - Data Engineering
+  - Airflow
+  - Spark
+  - Kafka
+  - FastAPI
+  - learnwithparam
+references:
+  - type: software
+    title: "End-to-End Data Pipeline (original reference architecture)"
+    authors:
+      - family-names: "Nguyen"
+        given-names: "Son"
+        orcid: "https://orcid.org/0009-0002-7806-068X"
+    url: "https://github.com/hoangsonww/End-to-End-Data-Pipeline"
+    license: "MIT"
