@@ -1,4 +1,4 @@
-# End-to-End Data Pipeline
+# Enterprise data platform from ingestion to governance
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -22,13 +22,27 @@
 [![Helm](https://img.shields.io/badge/Helm-0F1689?logo=helm&logoColor=white)](https://helm.sh/)
 [![learnwithparam](https://img.shields.io/badge/learnwithparam.com-0a0a0a?logo=readthedocs&logoColor=white)](https://www.learnwithparam.com)
 
-A **production-grade, fully containerized data platform** with batch ingestion, real-time streaming, a star-schema data warehouse, ML experiment tracking, a **Python FastAPI backend** (ported 1:1 from a .NET 8 reference), and full observability — all orchestrated through **20 Docker services** managed by a single `docker compose` stack.
+A production-grade, fully containerized data platform with batch ingestion, real-time streaming, a star-schema warehouse, ML experiment tracking, lineage, observability, and a FastAPI control plane, all orchestrated through **20 Docker services** managed by a single `docker compose` stack.
 
 This is the top tier of the [learnwithparam.com](https://www.learnwithparam.com) data engineering track. It follows:
 
 - **[`data-engineering-medallion`](../data-engineering-medallion)** — beginner, notebook-first, DuckDB + Pandas medallion pattern.
 - **[`data-engineering-pipeline`](../data-engineering-pipeline)** — intermediate, trimmed Airflow + Spark + Postgres + MinIO + FastAPI stack.
 - **`end-to-end-data-pipeline`** (this repo) — the full production platform with Kafka, Snowflake, MLflow, Prometheus, Grafana, Kubernetes, Terraform, and Helm.
+
+Start the course: [learnwithparam.com/courses/end-to-end-data-pipeline](https://www.learnwithparam.com/courses/end-to-end-data-pipeline)
+Join the full program: [learnwithparam.com/data-engineering-bootcamp](https://www.learnwithparam.com/data-engineering-bootcamp)
+
+## What you'll build
+
+By the end of this project you will have:
+
+- A **20-service reference platform** that combines batch, streaming, warehouse, ML, and observability in one runnable stack
+- A **Kafka + Spark streaming path** that sits beside the Airflow batch path without mixing responsibilities
+- A **Postgres and Snowflake-ready warehouse model** that mirrors how enterprise teams separate operational and analytical storage
+- An **MLflow and lineage layer** so experiments and data provenance live inside the platform instead of outside it
+- A **Prometheus + Grafana monitoring setup** that gives on-call engineers a real operational view
+- A **FastAPI control plane** that exposes health, pipeline operations, and platform status through one interface
 
 ## Table of Contents
 
@@ -38,7 +52,6 @@ This is the top tier of the [learnwithparam.com](https://www.learnwithparam.com)
 - [Quick Start](#quick-start)
 - [Service URLs](#service-urls)
 - [API Documentation (Python FastAPI)](#api-documentation-python-fastapi)
-- [.NET → Python Port Map](#net--python-port-map)
 - [Data Warehouse Schema](#data-warehouse-schema)
 - [Airflow DAGs](#airflow-dags)
 - [Testing](#testing)
@@ -104,7 +117,7 @@ Detailed mermaid diagrams live in `ARCHITECTURE.md`.
 
 ## Technology Stack
 
-- **Python 3.11** + **uv** — one language, one toolchain, across the whole platform (including the API that replaced the .NET reference backend)
+- **Python 3.11** + **uv** — one language and toolchain across the control plane and platform tooling
 - **Apache Airflow 2.7.3** — orchestration, 3 DAGs (`batch_ingestion_dag`, `streaming_monitoring_dag`, `warehouse_transform_dag`)
 - **Apache Kafka 7.5.0** + Zookeeper — streaming ingest
 - **Apache Spark 3.5.3** (master + workers) — batch + streaming ETL
@@ -178,57 +191,23 @@ The FastAPI is designed for graceful degradation — every health check and cont
 
 All endpoints live under `/api/*` plus the three standard `/health` probes. Auto-generated Swagger is at `http://localhost:5000/docs` (when running under compose) or `http://localhost:8000/docs` (when running locally with `make run`).
 
-Endpoint map (preserved from the original .NET controllers):
+Endpoint map:
 
-| Controller | Route | Method | Purpose |
+| Endpoint group | Route | Method | Purpose |
 |---|---|---|---|
-| BatchController | `/api/batch/ingest`, `/api/batch` | POST | Ingest from MySQL, upload to MinIO, optionally validate with GE + trigger Airflow |
-| StreamingController | `/api/stream/produce` | POST | Produce a Kafka message |
-| StreamingController | `/api/stream/run` | POST | Trigger the streaming DAG |
-| WarehouseController | `/api/warehouse/transform` | POST | Trigger warehouse transform DAG |
-| WarehouseController | `/api/warehouse/aggregations/daily-orders` | GET | Describe the daily-orders mart |
-| WarehouseController | `/api/warehouse/pipeline-runs` | GET | Describe the pipeline-runs fact |
-| WarehouseController | `/api/warehouse/health` | GET | Warehouse-specific health |
-| WarehouseController | `/api/warehouse/snowflake/status` | GET | Snowflake config status |
-| MLController | `/api/ml/run?expId=...&name=...` | POST | Create an MLflow run |
-| MonitoringController | `/api/monitor/health` | GET | Aggregate health map |
-| GovernanceController | `/api/governance/lineage` | POST | Register lineage with Apache Atlas |
-| CIController | `/api/ci/trigger?wf=...&branch=...` | POST | Trigger a GitHub Actions workflow |
+| Batch | `/api/batch/ingest`, `/api/batch` | POST | Ingest from MySQL, upload to MinIO, optionally validate with GE + trigger Airflow |
+| Streaming | `/api/stream/produce` | POST | Produce a Kafka message |
+| Streaming | `/api/stream/run` | POST | Trigger the streaming DAG |
+| Warehouse | `/api/warehouse/transform` | POST | Trigger warehouse transform DAG |
+| Warehouse | `/api/warehouse/aggregations/daily-orders` | GET | Describe the daily-orders mart |
+| Warehouse | `/api/warehouse/pipeline-runs` | GET | Describe the pipeline-runs fact |
+| Warehouse | `/api/warehouse/health` | GET | Warehouse-specific health |
+| Warehouse | `/api/warehouse/snowflake/status` | GET | Snowflake config status |
+| ML | `/api/ml/run?expId=...&name=...` | POST | Create an MLflow run |
+| Monitoring | `/api/monitor/health` | GET | Aggregate health map |
+| Governance | `/api/governance/lineage` | POST | Register lineage with Apache Atlas |
+| CI/CD | `/api/ci/trigger?wf=...&branch=...` | POST | Trigger a GitHub Actions workflow |
 | Health | `/health`, `/health/ready`, `/health/live` | GET | k8s-style probes |
-
-## .NET → Python Port Map
-
-The original `sample_dotnet_backend/` directory has been replaced with a 1:1 Python port. Routes, response shapes, and status codes are preserved so downstream consumers (notebooks, dashboards, BI tools) continue to work.
-
-| .NET original | Python target | Notes |
-|---|---|---|
-| `Program.cs` | `main.py` | FastAPI app + CORS + middleware + health endpoints + DI container |
-| `Models/BatchRequest.cs`, `StreamingRequest.cs` | `models.py` | pydantic BaseModel |
-| `Options/AirflowOptions.cs` | `config/airflow_options.py` | pydantic-settings `BaseSettings` |
-| `Options/AtlasOptions.cs` | `config/atlas_options.py` | same |
-| `Options/DatabaseOptions.cs` | `config/database_options.py` | same |
-| `Options/GEOptions.cs` | `config/ge_options.py` | same |
-| `Options/GitHubOptions.cs` | `config/github_options.py` | same |
-| `Options/KafkaOptions.cs` | `config/kafka_options.py` | same |
-| `Options/MinioOptions.cs` | `config/minio_options.py` | same |
-| `Options/MLflowOptions.cs` | `config/mlflow_options.py` | same |
-| `HealthChecks/AirflowHealthCheck.cs` | `healthchecks/airflow.py` | httpx |
-| `HealthChecks/KafkaHealthCheck.cs` | `healthchecks/kafka.py` | confluent-kafka AdminClient |
-| `HealthChecks/MinioHealthCheck.cs` | `healthchecks/minio.py` | `minio` SDK |
-| `HealthChecks/MLflowHealthCheck.cs` | `healthchecks/mlflow.py` | httpx |
-| `HealthChecks/MySqlHealthCheck.cs` | `healthchecks/mysql.py` | aiomysql |
-| `HealthChecks/PostgresHealthCheck.cs` | `healthchecks/postgres.py` | asyncpg |
-| `Services/DbService.cs` | `services/db_service.py` | aiomysql + asyncpg |
-| `Services/MinioService.cs` | `services/minio_service.py` | `minio` SDK |
-| `Services/KafkaService.cs` | `services/kafka_service.py` | confluent-kafka Producer |
-| `Services/GEValidationService.cs` | `services/ge_validation_service.py` | `asyncio.create_subprocess_exec` |
-| `Services/BatchService.cs` | `services/batch_service.py` | httpx + basic auth |
-| `Services/StreamingService.cs` | `services/streaming_service.py` | httpx + basic auth |
-| `Services/AtlasService.cs` | `services/atlas_service.py` | httpx + basic auth |
-| `Services/MLflowService.cs` | `services/mlflow_service.py` | httpx |
-| `Services/CIService.cs` | `services/ci_service.py` | httpx + bearer auth |
-| `Services/MonitoringService.cs` | `services/monitoring_service.py` | aggregates the health-check callables |
-| `Controllers/*.cs` (7 files) | `router.py` | one APIRouter, paths preserved |
 
 ## Data Warehouse Schema
 
@@ -274,12 +253,12 @@ make deploy-onprem    # k3s / kubeadm via Helm
 
 ```
 end-to-end-data-pipeline/
-├── main.py                  FastAPI app (Program.cs)
-├── router.py                Routes (Controllers/*.cs)
-├── models.py                Pydantic models (Models/*.cs)
-├── config/                  Options/*.cs ports
-├── healthchecks/            HealthChecks/*.cs ports
-├── services/                Services/*.cs ports
+├── main.py                  FastAPI app
+├── router.py                API routes
+├── models.py                Pydantic models
+├── config/                  typed configuration
+├── healthchecks/            service health probes
+├── services/                platform service integrations
 ├── airflow/                 DAGs + Airflow Dockerfile + plugins
 ├── spark/                   Batch + streaming jobs + Spark Dockerfile
 ├── kafka/                   Producer + Dockerfile
@@ -307,7 +286,13 @@ end-to-end-data-pipeline/
 
 ## Credits
 
-This project is a learnwithparam.com workshop fork of the open-source [End-to-End Data Pipeline](https://github.com/hoangsonww/End-to-End-Data-Pipeline) reference architecture by **Son Nguyen** (MIT). The original .NET 8 sample backend has been fully ported to Python/FastAPI for this fork. All original MIT copyright is preserved in `LICENSE`.
+This project is a learnwithparam.com workshop adaptation of the open-source [End-to-End Data Pipeline](https://github.com/hoangsonww/End-to-End-Data-Pipeline) reference architecture by **Son Nguyen** (MIT). Original attribution and license terms are preserved in `LICENSE`.
+
+## Learn more
+
+- Course page: [learnwithparam.com/courses/end-to-end-data-pipeline](https://www.learnwithparam.com/courses/end-to-end-data-pipeline)
+- Data Engineering Bootcamp: [learnwithparam.com/data-engineering-bootcamp](https://www.learnwithparam.com/data-engineering-bootcamp)
+- All courses: [learnwithparam.com/courses](https://www.learnwithparam.com/courses)
 
 ## License
 
