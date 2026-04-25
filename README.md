@@ -290,9 +290,10 @@ This project is a learnwithparam.com workshop adaptation of the open-source [End
 
 ## Learn more
 
-- Course page: [learnwithparam.com/courses/end-to-end-data-pipeline](https://www.learnwithparam.com/courses/end-to-end-data-pipeline)
+- Start the course: [learnwithparam.com/courses/end-to-end-data-pipeline](https://www.learnwithparam.com/courses/end-to-end-data-pipeline)
 - Data Engineering Bootcamp: [learnwithparam.com/data-engineering-bootcamp](https://www.learnwithparam.com/data-engineering-bootcamp)
 - All courses: [learnwithparam.com/courses](https://www.learnwithparam.com/courses)
+
 
 ## License
 
